@@ -1,8 +1,10 @@
 // Token Radar's entrypoint. It reads the sealed snapshot, scores it with the radar-2 model, and
 // writes the board, the dashboard's data and the dossier: everything the gate checks.
 //
-// Usage: node --experimental-strip-types main.ts --input snapshot.json --output /output
-// Contract: main.ts --input <path> | MAKEFUN_OUTPUT_DIR
+// Usage: node main.ts [--input snapshot.json] [--output /output]
+// Contract: --input <path> defaults to $MAKEFUN_INPUT_DIR/snapshot.json;
+// --output <dir> defaults to $MAKEFUN_OUTPUT_DIR. The grader runs the entry
+// with no arguments, so both defaults must work on their own.
 // The program runs twice and writes identical bytes on both runs; it reads no network, no file
 // outside its input, and takes no key. Everything it writes is derived from the snapshot alone,
 // so the second run is a byte-for-byte copy of the first.
@@ -24,13 +26,33 @@ function parseArgs(argv: string[]): { input: string; output: string } {
     if (a === '--input' && argv[i + 1] !== undefined) input = argv[++i]!;
     else if (a === '--output' && argv[i + 1] !== undefined) output = argv[++i]!;
   }
-  if (!input) throw new Error('missing --input <snapshot.json>');
   if (!output) throw new Error('missing --output <dir> (or MAKEFUN_OUTPUT_DIR)');
   return { input, output };
 }
 
+/**
+ * Where the snapshot comes from when --input is absent: the grader runs
+ * `node /bot/main.ts` with no arguments and puts the snapshot at
+ * $MAKEFUN_INPUT_DIR/snapshot.json. Prefer that exact name; if the input
+ * directory holds several .json files, take the first one by name so the
+ * choice is stable. Fail with a plain message when there is nothing to read.
+ */
+async function resolveInput(input: string): Promise<string> {
+  if (input) return input;
+  const inputDir = process.env.MAKEFUN_INPUT_DIR;
+  if (!inputDir) {
+    throw new Error('missing --input <snapshot.json> (or MAKEFUN_INPUT_DIR)');
+  }
+  const dir = resolve(inputDir);
+  const jsonFiles = (await readdir(dir)).filter((f) => f.toLowerCase().endsWith('.json')).sort();
+  if (jsonFiles.includes('snapshot.json')) return join(dir, 'snapshot.json');
+  if (jsonFiles.length > 0) return join(dir, jsonFiles[0]!);
+  throw new Error(`no snapshot found in MAKEFUN_INPUT_DIR=${dir} (looked for snapshot.json)`);
+}
+
 async function main(): Promise<void> {
-  const { input, output } = parseArgs(process.argv.slice(2));
+  const { input: inputFlag, output } = parseArgs(process.argv.slice(2));
+  const input = await resolveInput(inputFlag);
   const outDir = resolve(output);
   await mkdir(join(outDir, 'dashboard'), { recursive: true });
 
