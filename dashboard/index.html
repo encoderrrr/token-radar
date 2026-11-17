@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Token Radar — pre-token protocols, ranked by implied value</title>
+  <link rel="stylesheet" href="./app.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <h1>Token Radar</h1>
+      <p class="tag">Pre-token protocols, ranked by what a token would be worth</p>
+    </div>
+    <div class="stats" id="stats" aria-label="Snapshot facts"></div>
+  </header>
+
+  <main>
+    <section class="lede" id="lede" aria-label="What this board is"></section>
+
+    <section class="controls" aria-label="Filters">
+      <label class="field">Search
+        <input id="q" type="search" placeholder="Name or slug" autocomplete="off">
+      </label>
+      <label class="field">Category
+        <select id="category"><option value="">All categories</option></select>
+      </label>
+      <label class="field">Chain
+        <select id="chain"><option value="">All chains</option></select>
+      </label>
+      <label class="field check"><input id="watchlist" type="checkbox"> Watchlist only</label>
+      <div class="tabs" role="tablist" aria-label="Board view">
+        <button id="tab-pre" role="tab" aria-selected="true">Pre-token</button>
+        <button id="tab-live" role="tab" aria-selected="false">Live tokens</button>
+      </div>
+    </section>
+
+    <p class="hint" id="hint"></p>
+
+    <section class="table-wrap" aria-label="Ranked board">
+      <table id="board">
+        <thead>
+          <tr>
+            <th data-sort="rank" aria-sort="ascending">Rank</th>
+            <th data-sort="name">Protocol</th>
+            <th data-sort="category">Category</th>
+            <th data-sort="chain">Chain</th>
+            <th data-sort="tvl_usd" class="num">TVL</th>
+            <th data-sort="change_7d" class="num">7d</th>
+            <th data-sort="implied_value_usd" class="num">Implied value</th>
+            <th class="bar">Implied value</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <p class="empty" id="empty" hidden>No protocol matches these filters.</p>
+    </section>
+
+    <section class="model" aria-label="How the value is worked out">
+      <h2>How the value is worked out</h2>
+      <p class="formula">implied value = TVL × category multiple × growth × maturity</p>
+      <p>The multiple is the category's own going rate: the median market-cap-to-TVL ratio of the
+        token-trading protocols in that category, shrunk halfway toward the global median so a thin
+        category cannot swing the value; a category with fewer than three trading comps takes the
+        global median. Growth is the 7-day TVL change, clamped to −50%…+100% and halved. Maturity
+        runs from 0.6 for a new protocol to 1.0 for one listed at least three years ago; a protocol
+        with no listing date is counted at 365 days. No name is special-cased: the same formula
+        scores every row, and the table below is the one the snapshot produced.</p>
+      <table id="comps">
+        <thead><tr><th>Category</th><th class="num">Comps</th><th class="num">Median mcap/TVL</th><th class="num">Multiple used</th></tr></thead>
+        <tbody id="comp-rows"></tbody>
+      </table>
+      <p class="note">Implied values are this entry's own model, not make.fun's; no token is promised.</p>
+    </section>
+  </main>
+
+  <footer>
+    <p id="source"></p>
+    <p>Token Radar — built for make.fun's token-launch-radar bounty. Data: the sealed snapshot only; nothing is fetched live.</p>
+  </footer>
+
+  <dialog id="detail" aria-label="Protocol detail">
+    <div class="detail-head">
+      <h2 id="detail-title"></h2>
+      <button id="detail-close" aria-label="Close detail">×</button>
+    </div>
+    <div id="detail-body"></div>
+  </dialog>
+
+  <script src="./data.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
